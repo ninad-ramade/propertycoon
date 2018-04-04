@@ -2,7 +2,7 @@
 
 /**
  * @version    CVS: 1.0.0
- * @package    Com_Missioncontrol
+ * @package    Com_Landlord
  * @author     Ninad Ramade <ninad.ramade@gmail.com>
  * @copyright  2016 Ninad Ramade
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
@@ -40,6 +40,7 @@ class LandlordViewPortfolio extends JViewLegacy {
 		$model = $this->getModel ();
 		$this->state = $this->get ( 'State' );
 		$this->params = $mainframe->getParams ( 'com_landlord' );
+		$this->properties=LandlordHelpersLandlord::getPropertyHistorybyUserid();
 		if (count ( $errors = $this->get ( 'Errors' ) )) {
 			throw new Exception ( implode ( "\n", $errors ) );
 		}

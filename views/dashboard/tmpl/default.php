@@ -1,7 +1,7 @@
 <?php
 /**
  * @version    CVS: 1.0.0
- * @package    Com_Missioncontrol
+ * @package    Com_Landlord
  * @author     Ninad Ramade <ninad.ramade@gmail.com>
  * @copyright  2016 Ninad Ramade
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
@@ -71,6 +71,8 @@ h3
 <div class="dash_wrapper">
 	<div class="profile">
 		<h1><?php echo JFactory::getUser()->name; ?></h1>
+		<div style="text-align:center;" class="next_level">TOTAL EMPIRE VALUE</div>
+		<H3 style="text-align:center;margin-top:0px;"><?php echo ($this->portfolio->property_value+$this->portfolio->wallet_balance).' PRC'?></H3>
 		</div>
 	<div class="property_value"><h3>PROPERTY VALUE</h3>
 	<?php 
@@ -80,7 +82,7 @@ h3
 	<div class="progressbar">
 			<div class="completion" style="width:<?php echo $completion_percent.'%';?>;"><?php echo $this->portfolio->property_value.' PRC'; ?></div>
 		</div>
-		<div class="next_level">Need <?php echo $next_level->portfolio_value-$this->portfolio->property_value.' PRC';?> for next Level <?php echo $next_level->level_id; ?></div>
+		<div class="next_level">Need <?php echo $next_level->portfolio_value.' PRC';?> for next Level <?php echo $next_level->level_id; ?></div>
 	</div>
 	<div class="cash_balance"><h3>CASH BALANCE</h3>
 		<?php 
@@ -90,13 +92,13 @@ h3
 	<div class="progressbar">
 			<div class="completion" style="width:<?php echo $limit_percent.'%';?>;"><?php echo $this->portfolio->wallet_balance.' PRC'; ?></div>
 		</div>
-		<div class="next_level">Cash Limit <?php echo $current_level->cash_limit; ?></div>
+		<div class="next_level">Cash Limit <?php echo $current_level->cash_limit.' PRC'; ?></div>
 	</div>
 	<div class="revenue">
 		<h3>REVENUE</h3>
 		<table>
 			<tr><th>LAST 24 HOURS</th><th>LAST WEEK</th></tr>
-			<tr><td><?php echo $this->last_paid.' PRC'; ?></td><td><?php echo $this->weekly_rent.' PRC'; ?></td></tr>
+			<tr><td><?php echo !empty($this->last_paid) ? $this->last_paid.' PRC' : '&ndash;'; ?></td><td><?php echo !empty($this->weekly_rent) ? $this->weekly_rent.' PRC' : '&ndash;'; ?></td></tr>
 		</table>
 	</div>
 </div>

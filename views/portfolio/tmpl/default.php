@@ -1,7 +1,7 @@
 <?php
 /**
  * @version    CVS: 1.0.0
- * @package    Com_Missioncontrol
+ * @package    Com_Landlord
  * @author     Ninad Ramade <ninad.ramade@gmail.com>
  * @copyright  2016 Ninad Ramade
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
@@ -23,14 +23,13 @@ $doc->addScript ( JUri::base () . '/media/com_landlord/js/form.js' );
 <style>
 table
 {
-	float:left;
 	width:100%;
-	border:1px solid white;
+	border:1px solid #4c0120;
 }
 th,td
 {
 	padding:5px 10px;
-	border-right:1px solid white;
+	border-right:1px solid #4c0120;
 	width: 50%;
 	text-align:center;
 }
@@ -38,65 +37,53 @@ th,td
 	table
 	{
 		width:40%;
+		margin: 0 auto;
 	}
 }
-h3
+.folio_wrapper
 {
-	text-align:left;
+	float:left;
+	width:100%;
+	text-align:center;
+	color:#4c0120;
 }
-	.dash_wrapper
-	{
-		text-align:center;
-	}
-	.progressbar
-	{
-		width: 100%;
-  		background-color: #ddd;
-	}
-	.completion
-	{
-		height: 30px;
-		background-color: #4CAF50;
-		text-align: center;
-		line-height: 30px;
-		color: white;
-		font-size:16px;
-	}
-	.next_level
-	{
-		text-align: right;
-    	font-size: 11px;
-	}
+.place_img
+{
+    padding: 10px;
+}
+.place_address
+{
+	margin-bottom:10px;
+}
+.place_wrapper
+{
+	background-color:white;
+	padding:10px 0px;
+    border-radius:4px;
+    width:100%;
+    margin-bottom:10px;
+}
 </style>
-<div class="dash_wrapper">
-	<div class="profile">
-		<h1><?php echo JFactory::getUser()->name; ?></h1>
-		</div>
-	<div class="property_value"><h3>PROPERTY VALUE</h3>
-	<?php 
-	$next_level=LandlordHelpersLandlord::getLevelData($this->portfolio->level+1);
-	$completion_percent=($this->portfolio->property_value/$next_level->portfolio_value)*100;
+<div class="folio_wrapper">
+	<?php foreach($this->properties as $pkey=>$eachprop){
+		$place_details=json_decode(file_get_contents("https://maps.googleapis.com/maps/api/place/details/json?placeid=".$eachprop->place_id."&key=AIzaSyCTbismgZ1tAeVHX5Dn9OaF3IRtxz_FPVY"));
+		$rating=!empty($place_details->result->rating) ? $place_details->result->rating : 1;
 	?>
-	<div class="progressbar">
-			<div class="completion" style="width:<?php echo $completion_percent.'%';?>;"><?php echo $this->portfolio->property_value.' PRC'; ?></div>
-		</div>
-		<div class="next_level">Need <?php echo $next_level->portfolio_value-$this->portfolio->property_value.' PRC';?> for next Level <?php echo $next_level->level_id; ?></div>
-	</div>
-	<div class="cash_balance"><h3>CASH BALANCE</h3>
-		<?php 
-		$current_level=LandlordHelpersLandlord::getLevelData($this->portfolio->level);
-		$limit_percent=($this->portfolio->wallet_balance/$current_level->cash_limit)*100;
-	?>
-	<div class="progressbar">
-			<div class="completion" style="width:<?php echo $limit_percent.'%';?>;"><?php echo $this->portfolio->wallet_balance.' PRC'; ?></div>
-		</div>
-		<div class="next_level">Cash Limit <?php echo $current_level->cash_limit; ?></div>
-	</div>
-	<div class="revenue">
-		<h3>REVENUE</h3>
-		<table>
-			<tr><th>LAST 24 HOURS</th><th>LAST WEEK</th></tr>
-			<tr><td><?php echo $this->last_paid.' PRC'; ?></td><td><?php echo $this->weekly_rent.' PRC'; ?></td></tr>
+	<div class="place_wrapper">
+		<div class="place_image"><img class="place_img" src="<?php echo $place_details->result->icon; ?>" /></div>
+		<div class="place_name"><h3 style="margin-bottom:5px;"><?php echo $place_details->result->name; ?></h3></div>
+		<div class="place_address"><?php echo $place_details->result->formatted_address; ?></div>
+		<div class="place_value">VALUE OF <?php echo $eachprop->percent.'%'?> OWNED<?php $costs=LandlordHelpersLandlord::getCostbyTypeid($eachprop->place_type_id); 
+		$value=round(($costs->cost/100)*$eachprop->percent*$rating);?><h3 style="margin-top:0px;"><?php echo $value.' PRC'; ?></h3></div>
+		<div class="place_revenue">
+			<table>
+			<tr><th>RENT (LAST 24 HOURS)</th><th>CHARGES (LAST 24 HOURS)</th><th>TOTAL EARNINGS</th></tr>
+			<tr><td><?php $rent=round(($costs->rent/100)*$eachprop->percent*$rating);$charges=round(($costs->daily_charges/100)*$eachprop->percent*$rating);echo $rent-$charges.' PRC'; ?></td>
+			<td><?php echo '-'.$charges.' PRC'; ?></td>
+			<td><?php echo !empty($eachprop->earnings) ? $eachprop->earnings.' PRC' : '&ndash;'; ?></td></tr>
+			
 		</table>
+		</div>
 	</div>
+	<?php } ?>
 </div>

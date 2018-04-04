@@ -45,7 +45,7 @@ class LandlordController extends JControllerLegacy
 		$portfolios=LandlordHelpersLandlord::getAllPortfolios();
 		foreach($portfolios as $pkey=>$eachp)
 		{
-			$rent=0;
+			$final_rent=0;
 			$properties=LandlordHelpersLandlord::getPropertyHistorybyUserid($eachp->user_id);
 			foreach($properties as $key=>$eachprop)
 			{
@@ -53,13 +53,27 @@ class LandlordController extends JControllerLegacy
 				//need to get place data from Google Places API for current ratings for this place
 				$place_details=json_decode(file_get_contents("https://maps.googleapis.com/maps/api/place/details/json?placeid=".$eachprop->place_id."&key=AIzaSyCTbismgZ1tAeVHX5Dn9OaF3IRtxz_FPVY"));
 				$rating=!empty($place_details->result->rating) ? $place_details->result->rating : 1;
-				$rent+=round(($costs->rent/100)*$eachprop->percent*$rating);
+				$charges=round(($costs->daily_charges/100)*$eachprop->percent*$rating);
+				$rent=round(($costs->rent/100)*$eachprop->percent*$rating);
+				$final_rent+=($rent-$charges);
+				//check the cash limit for the level
+				$level_data=LandlordHelpersLandlord::getLevelData($eachp->level);
+				//lets make final rent to credit in line with the cash limit
+				$final_rent=($eachp->wallet_balance+$final_rent)>$level_data->cash_limit ? $level_data->cash_limit-$eachp->wallet_balance : $final_rent;
+				$property=new stdClass();
+				$property->property_id=$eachprop->property_id;
+				$property->earnings=$eachprop->earnings+$final_rent;
+				if(!$db->updateObject('#__propertycoon_properties',$property,'property_id'))
+				{
+					echo "Could not update property";
+					//notify admins
+				}
 			}
 			//we have got the rent, lets credit into the wallet
+			$db=JFactory::getDbo();
 			$folio=new stdClass();
 			$folio->folio_id=$eachp->folio_id;
-			$folio->wallet_balance=$eachp->wallet_balance+$rent;
-			$db=JFactory::getDbo();
+			$folio->wallet_balance=$eachp->wallet_balance+$final_rent;
 			if(!$db->updateObject('#__propertycoon_portfolio',$folio,'folio_id'))
 			{
 				echo "Could not credit rent into the portfolio";
@@ -68,7 +82,7 @@ class LandlordController extends JControllerLegacy
 			//lets insert in the rent log
 			$rent_log=new stdClass();
 			$rent_log->user_id=$eachp->user_id;
-			$rent_log->rent=$rent;
+			$rent_log->rent=$final_rent;
 			$rent_log->created_on=JFactory::getDate()->toSql();
 			if(!$db->insertObject('#__propertycoon_rent',$rent_log))
 			{
@@ -76,5 +90,6 @@ class LandlordController extends JControllerLegacy
 				//notify admins
 			}
 		}
+		echo "All rents paid!";exit;
 	}
 }
